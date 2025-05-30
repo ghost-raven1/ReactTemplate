@@ -8,7 +8,7 @@
 
 ## 🚀 Технологии
 
-- React 19
+- React 18
 - TypeScript
 - Ant Design
 - Vite
