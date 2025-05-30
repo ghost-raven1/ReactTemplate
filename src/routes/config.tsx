@@ -16,7 +16,7 @@ export interface RouteConfig {
 }
 
 // Ленивая загрузка компонентов
-const Home = lazy(() => import('../pages/Home').then(module => ({ default: module.Home })));
+const Home = lazy(() => import('../pages/Home/index').then(module => ({ default: module.Home })));
 const Profile = lazy(() => import('../pages/Profile').then(module => ({ default: module.Profile })));
 const NotFound = lazy(() => import('../pages/NotFound').then(module => ({ default: module.NotFound })));
 const LoginForm = lazy(() => import('../pages/Auth/LoginForm/LoginForm.tsx').then(module => ({ default: module.LoginForm })));
