@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useAuth } from '../../../shared/hooks/useAuth';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { ROUTES } from '../../../routes/config';
 
 const FormWrapper = styled.div`
@@ -114,7 +114,7 @@ const RegisterLink = styled.div`
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -128,15 +128,10 @@ export const LoginForm: React.FC = () => {
   const onFinish = async (values: LoginFormData) => {
     try {
       setLoading(true);
-      const result = await login(values.email, values.password);
-      
-      if (result.success) {
-        message.success('Успешный вход!');
-        const from = (location.state as any)?.from?.pathname || ROUTES.HOME;
-        navigate(from, { replace: true });
-      } else {
-        message.error(result.error || 'Ошибка входа');
-      }
+      await login(values.email, values.password);
+      message.success('Успешный вход!');
+      const from = (location.state as any)?.from?.pathname || ROUTES.HOME;
+      navigate(from, { replace: true });
     } catch (error) {
       message.error('Произошла ошибка при входе');
     } finally {

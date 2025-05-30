@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2025 Aleksej Starodubcev (tg: @ghost_raven1). All rights reserved.
  */
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useSidebarStore } from '../../../store/useSidebarStore';
@@ -15,7 +15,7 @@ import {
   DownOutlined
 } from '@ant-design/icons';
 import { routes, ROUTES } from '../../../routes/config';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { useNotification } from '../Notification';
 import { Dropdown, Button } from 'antd';
 import type { MenuProps } from 'antd';
@@ -122,7 +122,7 @@ const getRouteIcon = (path: string) => {
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { open } = useSidebarStore();
-  const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated, user, logout, isLoading } = useAuthStore();
   const { api: notification } = useNotification();
 
   const handleNavigate = useCallback((path: string) => {
@@ -130,13 +130,19 @@ export const Header: React.FC = () => {
   }, [navigate]);
 
   const handleLogout = useCallback(async () => {
-    const result = await logout();
-    if (result.success) {
+    try {
+      await logout();
       notification.success({
-        message: 'Successfully logged out',
+        message: 'Вы успешно вышли из системы',
         key: 'logout-notification',
       });
       navigate(ROUTES.LOGIN);
+    } catch (error) {
+      notification.error({
+        message: 'Не удалось выйти из системы',
+        description: 'Пожалуйста, попробуйте еще раз',
+        key: 'logout-error-notification',
+      });
     }
   }, [logout, navigate, notification]);
 
@@ -178,9 +184,10 @@ export const Header: React.FC = () => {
       key: 'logout',
       icon: <LoginOutlined />,
       label: 'Выйти',
-      onClick: handleLogout
+      onClick: handleLogout,
+      disabled: isLoading
     }] : [])
-  ], [getMainRoutes, getAuthRoutes, handleNavigate, handleLogout, isAuthenticated]);
+  ], [getMainRoutes, getAuthRoutes, handleNavigate, handleLogout, isAuthenticated, isLoading]);
 
   const buttonText = useMemo(() => {
     if (isAuthenticated && user) {
@@ -188,16 +195,6 @@ export const Header: React.FC = () => {
     }
     return 'Войти';
   }, [isAuthenticated, user]);
-
-  // Эффект для отслеживания изменений состояния авторизации
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      notification.success({
-        message: 'Successfully logged in',
-        key: 'login-notification',
-      });
-    }
-  }, [isAuthenticated, user, notification]);
 
   return (
     <HeaderWrapper>
@@ -210,8 +207,12 @@ export const Header: React.FC = () => {
         </CompanyName>
       </LeftSection>
       <RightSection>
-        <Dropdown menu={{ items: menuItems }} placement="bottomRight">
-          <UserButton>
+        <Dropdown 
+          key={`dropdown-${isAuthenticated}-${user?.id}`}
+          menu={{ items: menuItems }} 
+          placement="bottomRight"
+        >
+          <UserButton loading={isLoading}>
             <UserOutlined />
             {buttonText}
             <DownOutlined />

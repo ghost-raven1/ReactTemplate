@@ -16,7 +16,8 @@ import {
   UserAddOutlined
 } from '@ant-design/icons';
 import { routes, ROUTES } from '../../../routes/config';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { useNotification } from '../Notification';
 
 const SidebarWrapper = styled(motion.div)`
   position: fixed;
@@ -175,7 +176,8 @@ export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isOpen, close } = useSidebarStore();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, isLoading } = useAuthStore();
+  const { api: notification } = useNotification();
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -183,9 +185,20 @@ export const Sidebar: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    const result = await logout();
-    if (result.success) {
-      navigate(ROUTES.HOME);
+    try {
+      await logout();
+      notification.success({
+        message: 'Вы успешно вышли из системы',
+        key: 'logout-notification',
+      });
+      navigate(ROUTES.LOGIN);
+      close();
+    } catch (error) {
+      notification.error({
+        message: 'Не удалось выйти из системы',
+        description: 'Пожалуйста, попробуйте еще раз',
+        key: 'logout-error-notification',
+      });
     }
   };
 
@@ -205,7 +218,7 @@ export const Sidebar: React.FC = () => {
     if (isAuthenticated) {
       return [];
     }
-    return routes.filter(route =>
+    return routes.filter(route => 
       route.path === ROUTES.LOGIN || route.path === ROUTES.REGISTER
     );
   };
@@ -215,54 +228,40 @@ export const Sidebar: React.FC = () => {
       {isOpen && (
         <>
           <Overlay
-            variants={overlayVariants}
             initial="closed"
             animate="open"
             exit="closed"
+            variants={overlayVariants}
             onClick={close}
           />
           <SidebarWrapper
-            variants={sidebarVariants}
             initial="closed"
             animate="open"
             exit="closed"
+            variants={sidebarVariants}
           >
             <SidebarPanel>
-              <CloseButton
-                onClick={close}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
+              <CloseButton onClick={close}>
                 <CloseOutlined />
               </CloseButton>
               <MenuList>
-                {getMainRoutes().map((route, index) => (
+                {getMainRoutes().map((route) => (
                   <MenuItem
                     key={route.path}
                     active={location.pathname === route.path}
                     onClick={() => handleNavigate(route.path)}
                     variants={menuItemVariants}
-                    initial="closed"
-                    animate="open"
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                   >
                     <MenuIcon>{getRouteIcon(route.path)}</MenuIcon>
                     {route.meta?.title || route.path}
                   </MenuItem>
                 ))}
-                {getAuthRoutes().map((route, index) => (
+                {getAuthRoutes().map((route) => (
                   <MenuItem
                     key={route.path}
                     active={location.pathname === route.path}
                     onClick={() => handleNavigate(route.path)}
                     variants={menuItemVariants}
-                    initial="closed"
-                    animate="open"
-                    transition={{ delay: (getMainRoutes().length + index) * 0.1 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                   >
                     <MenuIcon>{getRouteIcon(route.path)}</MenuIcon>
                     {route.meta?.title || route.path}
@@ -272,11 +271,7 @@ export const Sidebar: React.FC = () => {
                   <MenuItem
                     onClick={handleLogout}
                     variants={menuItemVariants}
-                    initial="closed"
-                    animate="open"
-                    transition={{ delay: (getMainRoutes().length + getAuthRoutes().length) * 0.1 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    style={{ marginTop: 'auto' }}
                   >
                     <MenuIcon><LogoutOutlined /></MenuIcon>
                     Выйти

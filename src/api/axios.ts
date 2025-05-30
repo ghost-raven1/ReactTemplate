@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '../store/auth';
+import { useAuthStore } from '../store/useAuthStore';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
@@ -11,9 +11,9 @@ export const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const { accessToken } = useAuthStore.getState();
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    const token = useAuthStore.getState().token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -33,12 +33,12 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await useAuthStore.getState().refreshTokens();
-        const { accessToken } = useAuthStore.getState();
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
+        // Здесь должна быть логика обновления токена
+        // Пока просто очищаем состояние авторизации
+        useAuthStore.getState().clearAuth();
+        return Promise.reject(error);
       } catch (refreshError) {
-        await useAuthStore.getState().logout();
+        useAuthStore.getState().clearAuth();
         return Promise.reject(refreshError);
       }
     }
