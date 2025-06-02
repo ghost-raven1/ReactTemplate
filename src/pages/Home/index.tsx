@@ -1,10 +1,11 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components';
-import { Card } from '../../uikit/Card';
-import { PageTitle } from '../../uikit/PageTitle';
-import { PageDescription } from '../../uikit/PageDescription';
-import { FeaturesGrid } from '../../uikit/FeaturesGrid';
-import { FeatureCard } from '../../uikit/FeatureCard';
+import {Card} from '../../uikit/Card';
+import {PageTitle} from '../../uikit/PageTitle';
+import {PageDescription} from '../../uikit/PageDescription';
+import {FeaturesGrid} from '../../uikit/FeaturesGrid';
+import {FeatureCard} from '../../uikit/FeatureCard';
+import {api} from "../../api/axios.ts";
 
 const HomeContainer = styled.div`
   padding: 24px;
@@ -43,7 +44,15 @@ const features = [
   }
 ];
 
+// TODO: Для тестов MockServer
+const testReq = async () => {
+  return await api.get('/brokers');
+}
+
 export const Home: React.FC = () => {
+  useEffect(() => {
+    testReq().then(res => console.log(res))
+  })
   return (
     <HomeContainer>
       <Card>
@@ -85,4 +94,4 @@ export const Home: React.FC = () => {
       </Card>
     </HomeContainer>
   );
-}; 
+};
